@@ -72,9 +72,37 @@ run () {
 		sleep 5
 			reconnect_modem "12d1" "14dc"
 			reconnect_modem "12d1" "1506"
+	
 		done
 }
-if [ "$1" = "run" ] ; then
+
+dialPPP(){
+	if ls -la /dev/$ttyUSB 2>/dev/null; then
+		# Check if wvdial process is running
+		if ! ps -C wvdial
+				then
+						echo ">>> No wvdial process running... Start WvDial to connect modem to internet."
+						wvdial $@ >> /home/pi/HoneyPi/rpi-scripts/wvdial.log 2>&1&
+						time_started=`date +%s`
+				fi
+	fi
+}
+if [ "$1" = "dialPPP" ] ; then
+	if [ -f /var/run/connection.pid ] ; then
+		if ( ps -p $(cat /var/run/connection.pid) | grep pts ) ; then
+			echo ">>>Process already running with PID $(cat /var/run/connection.pid)..."
+		else
+			echo ">>>Pid file existed but process was dead!"
+			echo $$ >/var/run/connection.pid
+			shift
+			dialPPP $@ 
+		fi
+	else
+		echo $$ >/var/run/connection.pid
+		shift	
+		dialPPP $@ 
+	fi
+elif [ "$1" = "run" ] ; then
 	if [ -f /var/run/connection.pid ] ; then
 		if ( ps -p $(cat /var/run/connection.pid) | grep pts ) ; then
 			echo ">>>Process already running with PID $(cat /var/run/connection.pid)..."
@@ -124,6 +152,51 @@ elif [ "$1" = "set-apn" ] ; then
     export APN && export ttyUSB
     # Create the config for wvdial
     cat /etc/wvdial.conf.tmpl | envsubst > /etc/wvdial.conf
+elif [ "$1" = "set-ppp" ] ; then
+	shift
+	apn='internet.interkom.de'
+	interface="ttyAMA0"
+	modem="sim800x"
+	user=" "
+	password=" "
+	phone="*99#"
+	pin=""
+	
+
+	while getopts a:i:m:u:p:t:n: flag
+	do
+    	case "${flag}" in
+    	    a) apn=${OPTARG};;
+    	    i) interface=${OPTARG};;
+    	    m) modem=${OPTARG};;
+			u) user=${OPTARG};;
+			p) password=${OPTARG};;
+			t) phone=${OPTARG};;
+			n) pin=${OPTARG};;
+    	esac
+	done
+
+echo $apn
+
+	# enable uart interace
+	bash ./utils/enable_uart.sh
+
+	# copy settings for modem
+	mv ./templates/wvdial.set.templ /etc/ppp/peer/peers/wvdial
+
+	# set config with parameters
+	APN=$apn
+	ttyUSB=$interface
+	USERNAME=$user
+	PASSWORD=$password
+	PHONE=$phone
+	PIN=$pin
+
+	export APN && export ttyUSB  && export USERNAME  && export PASSWORD  && export PHONE && export PIN
+
+	# Create the config for wvdial
+	#cat /etc/wvdial.conf.tmpl | envsubst > /etc/wvdial.conf
+    cat /etc/wvdial.conf | envsubst <./templates/pppd/wvdial.conf.templ > ./wvdial.conf
 else
     echo "Error: Unknown argument."
     exit 1

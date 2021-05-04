@@ -300,7 +300,15 @@ def run_wvdial(modem):
             logger.debug('No known Surfstick found!')
     if os.path.exists('/dev/'+ modempath): # Modem attatched to UART will not be found usíng above routine, but will work with configuration settings
         logger.info('Starting wvdial for Modem on path ' + str(modempath) + ' with APN ' + modemapn)
-        os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh run)&")
+        if modem['enabled'] == 2:
+            if modem['hasPin'] == True:
+                logger.debug("Modem require Pin")
+                os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh dialPPP pin sim800x)&") ## run custom dialer
+            else:
+                logger.debug("Modem is calling")
+                os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh dialPPP sim800x)&") ## run custom dialer
+        else:
+            os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh run)&")
     else:
         logger.error("Not starting wvdial as no modem on configured path /dev/" + str(modempath) + " found! Please check configuration or modem")
 
