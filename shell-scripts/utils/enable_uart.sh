@@ -17,3 +17,9 @@ if grep -q 'enable_uart=1' /boot/config.txt; then
 else
   echo 'enable_uart=1' >> /boot/config.txt
 fi
+
+if grep -q '^dtparam=i2c_arm=on' /boot/config.txt; then
+  echo '2 - Seems i2c_arm parameter already set, skip this step.'
+else
+  echo 'dtparam=i2c_arm=on' >> /boot/config.txt
+fi

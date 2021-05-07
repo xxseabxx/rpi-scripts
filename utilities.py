@@ -303,12 +303,13 @@ def run_wvdial(modem):
         if modem['enabled'] == 2:
             if modem['hasPin'] == True:
                 logger.debug("Modem require Pin")
-                os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh dialPPP pin sim800x)&") ## run custom dialer
+                os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh dialPPP sim800x pin)&") ## run custom dialer
             else:
                 logger.debug("Modem is calling")
                 os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh dialPPP sim800x)&") ## run custom dialer
         else:
-            os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh run)&")
+            print("dial sudo sh " + scriptsFolder + "/shell-scripts/connection.sh run)&")
+            #os.system("(sudo sh " + scriptsFolder + "/shell-scripts/connection.sh run)&")
     else:
         logger.error("Not starting wvdial as no modem on configured path /dev/" + str(modempath) + " found! Please check configuration or modem")
 
